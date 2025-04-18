@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bean-Genie Chat</title>
+    <style>
+        body {
+            font-family: 'Papyrus', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #d4af37, #8b5e3c);
+            color: #3a2f1b;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #6b4c1d;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f0e6d2;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #chat-container {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: #f9f5e3;
+            border-left: 10px solid #d4af37;
+            border-right: 10px solid #d4af37;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 1rem;
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #f0e6d2;
+            align-self: flex-end;
+            border: 2px solid #d4af37;
+        }
+        .bot-message {
+            background-color: #d4af37;
+            color: #3a2f1b;
+            align-self: flex-start;
+            border: 2px solid #6b4c1d;
+        }
+        #input-container {
+            display: flex;
+            padding: 1rem;
+            background-color: #6b4c1d;
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.3);
+            align-items: center;
+        }
+        #user-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+        }
+        #send-button {
+            background-color: #d4af37;
+            border: none;
+            padding: 0 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #3a2f1b;
+            cursor: pointer;
+            border-radius: 0 5px 5px 0;
+            transition: background-color 0.3s ease;
+        }
+        #send-button:hover {
+            background-color: #b38b1a;
+        }
+        #commands-container {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.5rem 1rem;
+            background-color: #f0e6d2;
+            border-top: 2px solid #d4af37;
+            gap: 0.5rem;
+        }
+        .command-button {
+            background-color: #d4af37;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #3a2f1b;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .command-button:hover {
+            background-color: #b38b1a;
+        }
+    </style>
+</head>
+<body>
+    <header>Bean-Genie Chat</header>
+    <div id="chat-container"></div>
+    <div id="commands-container">
+        <button class="command-button" data-command="!convert beans 1000">Convert Beans</button>
+        <button class="command-button" data-command="!track 15000 85">Track Progress</button>
+        <button class="command-button" data-command="!events">Events</button>
+        <button class="command-button" data-command="!growth instagram">Growth Instagram</button>
+        <button class="command-button" data-command="!sponsorship 10000">Sponsorship Info</button>
+        <button class="command-button" data-command="!wishlist">Wishlist Guide</button>
+        <button class="command-button" data-command="!cross_promote">Cross Promotion</button>
+        <button class="command-button" data-command="!strategy 20000 100">Strategy</button>
+        <button class="command-button" data-command="!loan_info">Loan Info</button>
+        <button class="command-button" data-command="!credit_score">Credit Score</button>
+        <button id="restart-button" class="command-button">Restart Server</button>
+    </div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off" />
+        <button id="send-button">Send</button>
+    </div>
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const commandButtons = document.querySelectorAll('.command-button');
+        const restartButton = document.getElementById('restart-button');
+
+        function appendMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage(message) {
+            if (!message) return;
+            appendMessage(message, true);
+            userInput.value = '';
+            try {
+                const response = await fetch('/api/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+                appendMessage(data.reply, false);
+            } catch (error) {
+                appendMessage('Error: Unable to get response from server.', false);
+            }
+        }
+
+        sendButton.addEventListener('click', () => sendMessage(userInput.value.trim()));
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage(userInput.value.trim());
+            }
+        });
+
+        commandButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const command = button.getAttribute('data-command');
+                sendMessage(command);
+            });
+        });
+
+        restartButton.addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to restart the server?')) return;
+            try {
+                const response = await fetch('/restart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                appendMessage(data.message || 'Server restart initiated.', false);
+            } catch (error) {
+                appendMessage('Error: Unable to restart the server.', false);
+            }
+        });
+    </script>
+</body>
+</html>
